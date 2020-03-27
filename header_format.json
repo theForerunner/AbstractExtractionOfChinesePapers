@@ -1,0 +1,11 @@
+{
+    "corresponding_author":{"content":"通讯作者", "length":6},
+    "abstract":{"content":"摘  要", "length":6},
+    "keywords":{"content":"关键词", "length":5},
+    "category_code":{"content":"中图法分类号", "length":8},
+    "citation":{"content":"中文引用格式", "length":8},
+    "citation_en":{"content":"英文引用格式", "length":8},
+    "abstract_en":{"content":"Abstract", "length":11},
+    "keywords_en":{"content":"Key words", "length":12},
+    "references":{"content":"References", "length":11}
+}
