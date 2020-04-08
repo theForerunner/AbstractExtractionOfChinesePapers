@@ -11,9 +11,9 @@ input_path = os.path.join(par_dir, 'input')
 output_path = os.path.join(par_dir, 'output')
 header_format_path = os.path.join(par_dir, 'header_format.json')
 
-journal_list = ['journal_of_software', 'journal_of_computers']
-journal_name = journal_list[0]
-file_name = 'sample_2.pdf'
+journal_list = ['journal_of_software', 'journal_of_computers','data']
+journal_name = journal_list[2]
+file_name = '18001.pdf'
 
 pdf_path = os.path.join(input_path, journal_name, file_name)
 txt_name = file_name.replace('.pdf', '.txt')
@@ -97,6 +97,7 @@ def txt_parser(path, target_path, header_format_path):
 
     headers = header_format_loader(header_format_path)
     header_key_list = list(headers.keys())
+    print(header_key_list)
     info = {}
 
     # 读取 PDF 提取结果
@@ -110,12 +111,31 @@ def txt_parser(path, target_path, header_format_path):
 
     # 分别提取各部分信息
     info['title'] = lines[0].strip()
-    info['authors'] = re.sub('[0-9,]+', ' ', re.sub(r'[\s]+', '', ''.join(lines[1:3]))).split()
+
+    # info['authors'] = re.sub('[0-9,]+', ' ', re.sub(r'[\s]+', '', ''.join(lines[1:3]))).split() [sample_1 avaliable]
+    info['authors'] = re.sub('[0-9,]+', ' ', re.sub(r'[\s]+', '', ''.join(lines[1:2]))).split()
+
+    # print(len(lines)),不是lines超出了，可能是key
     for index, key in enumerate(header_key_list):
-        while not lines[line_ptr].startswith(headers[key]['content']):
-            line_ptr += 1
+        print(key)
+        #如果每一行的开头不是论文中标识的内容的时候
+        # while not lines[line_ptr].startswith(headers[key]['content']):
+        #     line_ptr += 1
         line_start = line_ptr
+        print(line_start)
+
+
+        for i,val in enumerate(lines,line_start):
+            # print(val)
+            if not val.startswith(headers[key]['content']):
+                line_ptr+=1;
+            else:
+                print("stop!")
+                break;
         try:
+            #摘要的上一行一般是通信作者
+            if key =='abstract' :
+                info['corresponding_author']=lines[line_start-1].strip("通讯作者: ")
             if key == 'citation_en':
                 # 由于与中文的引用一样, 以 URL 结尾, 检测完整URL是否存在
                 while not ''.join(lines[line_start:line_ptr]).replace('\n', '').strip()[-len(citation_url):] == citation_url:
@@ -141,6 +161,7 @@ def txt_parser(path, target_path, header_format_path):
         elif key in ['keywords', 'keywords_en']:
             # 切分关键词
             info[key] = info[key].replace('; ', ';').split(';')
+        print(line_ptr)
 
     with open(target_path, 'w', encoding='utf-8') as fw:
         json.dump(info, fw, ensure_ascii=False, indent=4)
