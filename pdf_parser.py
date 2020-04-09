@@ -31,6 +31,34 @@ def pdf2text(path, target_path):
         # 过滤一行中的非法字符
         return re.sub(u'[^0-9a-zA-Z\u4e00-\u9fa5{}]+'.format(punc), '', text)
 
+    def clean_image(page):
+        #过滤图片
+        page.reverse()
+        isimage = False
+        haveimage = False
+        index = 0
+        while index < (len(page)):
+            if (page[index].endswith('. \n')):
+                isimage = False
+            if (isimage):
+                # 删除图片上文字
+                del page[index]
+                index -= 1
+            if (page[index].startswith('Fig')):
+                # 删除图片标题英文行
+                del page[index]
+                # 删除图片标题中文行
+                del page[index - 1]
+                index -= 2
+                isimage = True
+                haveimage = True
+            index += 1
+        page.reverse()
+        if (haveimage):
+            if not (page[0] == '\n'):
+                page.insert(0, '\n')
+        return page
+
     def check_if_header(line):
         # 检测一行是否为页眉
 
@@ -43,7 +71,10 @@ def pdf2text(path, target_path):
         try:
             if isinstance(get_eval_without_exception(line[:4]), numbers.Integral) and '软件学报' in line:
                 return True
-            if isinstance(get_eval_without_exception(line.rstrip()[-4:]), numbers.Integral) and line.rstrip()[-4] == ' ':
+            # 2017 修改 页码可能为2/3/4位数
+            if (isinstance(get_eval_without_exception(line.rstrip()[-2:]), numbers.Integral) and line.rstrip()[-3] == ' ') or \
+                    (isinstance(get_eval_without_exception(line.rstrip()[-3:]), numbers.Integral) and line.rstrip()[-4] == ' ') or \
+                    (isinstance(get_eval_without_exception(line.rstrip()[-4:]), numbers.Integral) and line.rstrip()[-5] == ' '):
                 return True
             return False
         except IndexError:
@@ -69,6 +100,7 @@ def pdf2text(path, target_path):
     for index, page in enumerate(pages):
         sections = []
         temp_lines = []
+        page = clean_image(page)
         for line in page[1:]:
             if not line.strip():
                 if temp_lines:
